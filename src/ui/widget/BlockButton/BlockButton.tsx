@@ -31,7 +31,15 @@ const styles = StyleSheet.create({
         display: "flex",
         flexDirection: "column",
         gap: 0,
-
+    },
+    title: {
+        color: "#FFFFFF",
+        fontSize: RFValue(36, 2400),
+        fontWeight: "bold",
+    },
+    note: {
+        color: "#FFFFFF",
+        fontSize: RFValue(32, 2400),
     }
 })
 
@@ -40,8 +48,8 @@ export const BlockButton: React.FC<BlockButtonProps> = ({title, note = "", icon,
         <View style={styles.container}>
             <View style={styles.header}>
                 <View>
-                    <Text>{title}</Text>
-                    <Text>{note}</Text>
+                    <Text style={styles.title}>{title}</Text>
+                    <Text style={styles.note}>{note}</Text>
                 </View>
                 {icon}
             </View>
