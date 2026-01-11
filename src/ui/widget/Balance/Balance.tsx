@@ -48,7 +48,7 @@ export const Balance = () => {
             <Text style={styles.title}>Баланс</Text>
             <View style={styles.balanceContainer}>
                 <Text style={styles.balanceValue}>120 000 ₽</Text>
-                <IcEyeOff />
+                <IcEyeOff width={50} height={50} />
             </View>
             <View style={styles.cardContainer}>
                 <Text style={styles.cardText}>МИР *4821</Text>

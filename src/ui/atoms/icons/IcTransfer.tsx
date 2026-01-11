@@ -1,8 +1,11 @@
 import Svg, {ClipPath, Defs, G, Path, Rect} from "react-native-svg";
+import React from "react";
+import {SvgProps} from "react-native-svg/src/elements/Svg";
+import {RFValue} from "react-native-responsive-fontsize";
 
-export const IcTransfer = () => {
+export const IcTransfer: React.FC<SvgProps> = ({width = 28, height = 27}) => {
     return (
-        <Svg width="28" height="27" viewBox="0 0 28 27" fill="none">
+        <Svg width={RFValue(Number(width), 2400)} height={RFValue(Number(height), 2400)} viewBox="0 0 28 27" fill="none">
             <G clip-path="url(#clip0_20_623)">
                 <Path d="M24 7H8C6.89 7 6.01 7.89 6.01 9L6 21C6 22.11 6.89 23 8 23H24C25.11 23 26 22.11 26 21V9C26 7.89 25.11 7 24 7ZM24 21H8V13H24V21ZM24 11H8V9H24V11Z" fill="white"/>
             </G>

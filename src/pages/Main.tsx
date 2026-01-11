@@ -4,6 +4,8 @@ import {BlockButton} from "../ui/widget/BlockButton/BlockButton";
 import {IcTransfer} from "../ui/atoms/icons/IcTransfer";
 import {IcQRCode} from "../ui/atoms/icons/IcQRCode";
 import {RFValue} from "react-native-responsive-fontsize";
+import {TransferByPAN} from "../ui/widget/Transfer/TransferByPAN";
+import {HistoryWidget} from "../ui/widget/History/HistoryWidget";
 
 const style = StyleSheet.create({
     main: {
@@ -26,10 +28,14 @@ export const Main = () => {
         <View style={style.main}>
             <Balance />
 
-            <View style={style.operations}>
-                <BlockButton icon={<IcTransfer />} title={"Перевести"} note={"на карту"} />
-                <BlockButton title={"Сканировать QR"} icon={<IcQRCode />} />
-            </View>
+            {/*<View style={style.operations}>*/}
+            {/*    <BlockButton icon={<IcTransfer />} title={"Перевести"} note={"на карту"} />*/}
+            {/*    <BlockButton title={"Сканировать QR"} icon={<IcQRCode />} />*/}
+            {/*</View>*/}
+
+            <TransferByPAN />
+
+            <HistoryWidget />
         </View>
     )
 }
