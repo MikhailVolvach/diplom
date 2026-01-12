@@ -2,7 +2,8 @@ export enum Category {
     grocery = "Бакалея",
     med = "Здоровье",
     cashback = "Кэшбек",
-    salary = "Зарплата"
+    salary = "Зарплата",
+    transfer = 'Перевод'
 }
 
 export enum HistoryItemType {

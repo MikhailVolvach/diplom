@@ -6,6 +6,9 @@ import {IcQRCode} from "../ui/atoms/icons/IcQRCode";
 import {RFValue} from "react-native-responsive-fontsize";
 import {TransferByPAN} from "../ui/widget/Transfer/TransferByPAN";
 import {HistoryWidget} from "../ui/widget/History/HistoryWidget";
+import {useEffect, useState} from "react";
+import {fetchHistory} from "../services/database";
+import {IHistoryMock} from "../mockData/history";
 
 const style = StyleSheet.create({
     main: {
@@ -24,6 +27,14 @@ const style = StyleSheet.create({
 })
 
 export const Main = () => {
+    const [history, setHistory] = useState<IHistoryMock[]>([]);
+
+    useEffect(() => {
+        const history = fetchHistory();
+
+        setHistory(history);
+    }, [])
+
     return (
         <View style={style.main}>
             <Balance />
@@ -35,7 +46,7 @@ export const Main = () => {
 
             <TransferByPAN />
 
-            <HistoryWidget />
+            <HistoryWidget items={history} />
         </View>
     )
 }

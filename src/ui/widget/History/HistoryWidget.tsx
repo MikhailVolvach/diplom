@@ -1,5 +1,5 @@
 import {StyleSheet, View, Text, Pressable} from "react-native";
-import {historyMock} from "../../../mockData/history";
+import {historyMock, IHistoryMock} from "../../../mockData/history";
 import {HistoryItem} from "../../atoms/HistoryItem/HistoryItem";
 import {RFValue} from "react-native-responsive-fontsize";
 import React from "react";
@@ -38,10 +38,11 @@ const styles = StyleSheet.create({
 })
 
 export interface HistoryWidgetProps {
+    items: IHistoryMock[];
     smallView?: boolean;
 }
 
-export const HistoryWidget: React.FC<HistoryWidgetProps> = ({smallView = true}) => {
+export const HistoryWidget: React.FC<HistoryWidgetProps> = ({items, smallView = true}) => {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -49,7 +50,7 @@ export const HistoryWidget: React.FC<HistoryWidgetProps> = ({smallView = true}) 
                 {smallView && <Pressable><Text style={styles.more}>Ещё...</Text></Pressable>}
             </View>
             <View style={styles.content}>
-                {(smallView ? historyMock.slice(0, 4) : historyMock).map((item, index) => (
+                {(smallView ? items.slice(0, 4) : items).map((item, index) => (
                     <HistoryItem key={index} {...item} />
                 ))}
             </View>

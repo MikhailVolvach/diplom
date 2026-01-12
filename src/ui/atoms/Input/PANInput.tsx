@@ -24,9 +24,9 @@ export const PANInput: React.FC<PANInputProps> = ({PAN = "", onChange}) => {
             style={style.input}
             onChangeText={onChange}
             value={PAN}
-            placeholder="0000 0000 0000 0000"
+            placeholder="0000000000000000"
             keyboardType="numeric"
-            maxLength={19}
+            maxLength={16}
             placeholderTextColor={"rgba(255, 255, 255, .5)"}
         />
     )

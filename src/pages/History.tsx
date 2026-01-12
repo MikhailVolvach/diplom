@@ -1,12 +1,13 @@
-import {ScrollView, StyleSheet, View, Text} from "react-native";
+import {ScrollView, StyleSheet, Text, View} from "react-native";
 import {Balance} from "../ui/widget/Balance/Balance";
 import {BlockButton} from "../ui/widget/BlockButton/BlockButton";
-import {IcTransfer} from "../ui/atoms/icons/IcTransfer";
-import {IcQRCode} from "../ui/atoms/icons/IcQRCode";
 import {RFValue} from "react-native-responsive-fontsize";
 import {HistoryWidget} from "../ui/widget/History/HistoryWidget";
 import {IcGraphDown} from "../ui/atoms/icons/IcGraphDown";
 import {IcGraphUp} from "../ui/atoms/icons/IcGraphUp";
+import {useEffect, useState} from "react";
+import {fetchHistory} from "../services/database";
+import {HistoryItemType, IHistoryMock} from "../mockData/history";
 
 const style = StyleSheet.create({
     main: {
@@ -30,6 +31,19 @@ const style = StyleSheet.create({
 })
 
 export const History = () => {
+    const [income, setIncome] = useState(0);
+    const [expense, setExpense] = useState(0);
+    const [history, setHistory] = useState<IHistoryMock[]>([]);
+
+    useEffect(() => {
+        const history = fetchHistory();
+
+        setHistory(history);
+
+        setIncome(history.filter(value => value.type === HistoryItemType.INCOME).reduce((prevValue, currValue) => prevValue + currValue.sum, 0))
+        setExpense(history.filter(value => value.type === HistoryItemType.EXPENSE).reduce((prevValue, currValue) => prevValue + currValue.sum, 0))
+    }, []);
+
     return (
         <ScrollView>
             <View style={style.main}>
@@ -38,17 +52,17 @@ export const History = () => {
                 <View style={style.operations}>
                     <BlockButton icon={<IcGraphDown fill={"#BF2D13"} width={67} height={65} />} title={"Потрачено"} note={"за месяц"}>
                         <Text style={style.statsText}>
-                            67890 ₽
+                            {expense.toLocaleString()} ₽
                         </Text>
                     </BlockButton>
                     <BlockButton icon={<IcGraphUp fill={"#10FF7C"} width={67} height={65} />} title={"Получено"} note={"за месяц"}>
                         <Text style={style.statsText}>
-                            120000 ₽
+                            {income.toLocaleString()} ₽
                         </Text>
                     </BlockButton>
                 </View>
 
-                <HistoryWidget smallView={false} />
+                <HistoryWidget items={history} smallView={false} />
             </View>
         </ScrollView>
     )

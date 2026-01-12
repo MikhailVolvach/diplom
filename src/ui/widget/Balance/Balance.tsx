@@ -1,6 +1,8 @@
 import {View, Text, StyleSheet} from "react-native";
 import {IcEyeOff} from "../../atoms/icons/IcEyeOff";
 import {RFValue} from "react-native-responsive-fontsize";
+import {useEffect, useState} from "react";
+import {CardRow, fetchCards} from "../../../services/database";
 
 const styles = StyleSheet.create({
     container: {
@@ -18,6 +20,11 @@ const styles = StyleSheet.create({
         display: "flex",
         flexDirection: "row",
         justifyContent: "space-between",
+    },
+    cardsWrapper: {
+        display: "flex",
+        flexDirection: "column",
+        gap: RFValue(10, 2400),
     },
     cardContainer: {
         display: "flex",
@@ -43,16 +50,35 @@ const styles = StyleSheet.create({
 })
 
 export const Balance = () => {
+    const [cards, setCards] = useState<CardRow[]>([]);
+    const [balance, setBalance] = useState(0);
+
+    useEffect(() => {
+        const cards = fetchCards();
+
+        setBalance(cards.reduce(
+                (previousValue, currentValue) => currentValue.balance + previousValue,
+                0
+            )
+        )
+
+        setCards(cards);
+    }, []);
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Баланс</Text>
             <View style={styles.balanceContainer}>
-                <Text style={styles.balanceValue}>120 000 ₽</Text>
-                <IcEyeOff width={50} height={50} />
+                <Text style={styles.balanceValue}>{balance.toLocaleString()} ₽</Text>
+                {/*<IcEyeOff width={50} height={50} />*/}
             </View>
-            <View style={styles.cardContainer}>
-                <Text style={styles.cardText}>МИР *4821</Text>
-                <Text style={styles.cardText}>50 000 ₽</Text>
+            <View style={styles.cardsWrapper}>
+                {cards.map((card, i) => (
+                    <View key={i} style={styles.cardContainer}>
+                        <Text style={styles.cardText}>{card.label} *{card.masked_number}</Text>
+                        <Text style={styles.cardText}>{card.balance.toLocaleString()} {card.currency}</Text>
+                    </View>
+                ))}
             </View>
         </View>
     )
