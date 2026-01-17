@@ -3,6 +3,7 @@ import {historyMock, IHistoryMock} from "../../../mockData/history";
 import {HistoryItem} from "../../atoms/HistoryItem/HistoryItem";
 import {RFValue} from "react-native-responsive-fontsize";
 import React from "react";
+import {useNavigation} from "@react-navigation/native";
 
 const styles = StyleSheet.create({
     container: {
@@ -43,11 +44,17 @@ export interface HistoryWidgetProps {
 }
 
 export const HistoryWidget: React.FC<HistoryWidgetProps> = ({items, smallView = true}) => {
+    const navigation = useNavigation();
+
+    const onShowMore = () => {
+        navigation.navigate('History');
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>История</Text>
-                {smallView && <Pressable><Text style={styles.more}>Ещё...</Text></Pressable>}
+                {smallView && <Pressable onPress={onShowMore}><Text style={styles.more}>Ещё...</Text></Pressable>}
             </View>
             <View style={styles.content}>
                 {(smallView ? items.slice(0, 4) : items).map((item, index) => (

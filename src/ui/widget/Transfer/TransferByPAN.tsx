@@ -24,15 +24,20 @@ const styles = StyleSheet.create({
     }
 })
 
-export const TransferByPAN = () => {
+export interface TransferByPANProps {
+    onSubmit: (PAN: string, sum: string) => void;
+}
+
+export const TransferByPAN: React.FC<TransferByPANProps> = ({onSubmit}) => {
     const [PAN, setPAN] = useState("");
     const [sum, setSum] = useState("");
 
-    const onSubmit = () => {
+    const onClick = () => {
         if (PAN.length < 16 || parseInt(sum) <= 0) {
             return;
         }
-        createTransaction(PAN, parseInt(sum));
+        onSubmit(PAN, sum)
+        // createTransaction(PAN, parseInt(sum));
         setPAN("");
         setSum("");
     }
@@ -44,7 +49,7 @@ export const TransferByPAN = () => {
             <PANInput onChange={setPAN} PAN={PAN} />
             <SumInput onChange={setSum} sum={sum} />
 
-            <ButtonWithIcon onClick={onSubmit} text={"Отправить"} icon={<IcExit width={40} height={40} />} />
+            <ButtonWithIcon onClick={onClick} text={"Отправить"} icon={<IcExit width={40} height={40} />} />
         </View>
     )
 }

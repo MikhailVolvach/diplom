@@ -6,7 +6,7 @@ import {HistoryWidget} from "../ui/widget/History/HistoryWidget";
 import {IcGraphDown} from "../ui/atoms/icons/IcGraphDown";
 import {IcGraphUp} from "../ui/atoms/icons/IcGraphUp";
 import {useEffect, useState} from "react";
-import {fetchHistory} from "../services/database";
+import {CardRowWithSum, fetchCards, fetchHistory} from "../services/database";
 import {HistoryItemType, IHistoryMock} from "../mockData/history";
 
 const style = StyleSheet.create({
@@ -35,7 +35,16 @@ export const History = () => {
     const [expense, setExpense] = useState(0);
     const [history, setHistory] = useState<IHistoryMock[]>([]);
 
+    const [cards, setCards] = useState<CardRowWithSum[]>([]);
+    const [balance, setBalance] = useState(0);
+
     useEffect(() => {
+        const cards = fetchCards();
+
+        setBalance(cards.reduce((previousValue, currentValue) => currentValue.net_sum + previousValue, 0))
+
+        setCards(cards);
+
         const history = fetchHistory();
 
         setHistory(history);
@@ -47,7 +56,7 @@ export const History = () => {
     return (
         <ScrollView>
             <View style={style.main}>
-                <Balance />
+                <Balance balance={balance} cards={cards} />
 
                 <View style={style.operations}>
                     <BlockButton icon={<IcGraphDown fill={"#BF2D13"} width={67} height={65} />} title={"Потрачено"} note={"за месяц"}>

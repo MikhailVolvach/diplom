@@ -22,6 +22,9 @@ const Navigation = () => {
                         backgroundColor: "transparent"
                     },
                     tabBarStyle: { position: 'absolute'},
+                    headerBackgroundContainerStyle: {
+                        backgroundColor: "transparent",
+                    }
                     // tabBarBackground: () => (
                     //     <BlurView  />
                     // ),

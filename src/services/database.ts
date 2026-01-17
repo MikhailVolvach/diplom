@@ -1,5 +1,5 @@
 // src/services/database.ts
-import {openDatabaseAsync, openDatabaseSync} from "expo-sqlite";
+import {openDatabaseAsync, openDatabaseSync, SQLiteDatabase} from "expo-sqlite";
 import {Category, HistoryItemType, historyMock, IHistoryMock} from "../mockData/history";
 
 // const db = SQLite.openDatabaseSync("local.db");
@@ -8,100 +8,113 @@ const DB_NAME = "local.db";
 const CARDS_TABLE = "cards";
 const HISTORY_TABLE = "history_items";
 
-export const createDatabase = () => {
-    const db = openDatabaseSync(DB_NAME);
-    db.execSync(`
-        CREATE TABLE IF NOT EXISTS ${CARDS_TABLE} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            label TEXT NOT NULL,
-            masked_number TEXT NOT NULL,
-            balance INTEGER NOT NULL,
-            currency TEXT NOT NULL DEFAULT '₽'
-        );
-    `);
+let dbInitPromise: SQLiteDatabase | null = null;
 
-    db.execSync(`
-        CREATE TABLE IF NOT EXISTS ${HISTORY_TABLE} (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            category TEXT NOT NULL,
-            type TEXT NOT NULL,
-            sum INTEGER NOT NULL
-        );
-    `);
+const getDatabase = (): SQLiteDatabase => {
+    if (!dbInitPromise) {
+        dbInitPromise = openDatabaseSync(DB_NAME)
 
-    return db;
+        dbInitPromise.execSync("PRAGMA foreign_keys = ON;");
+        dbInitPromise.execSync(`
+            CREATE TABLE IF NOT EXISTS ${CARDS_TABLE} (
+                masked_number TEXT PRIMARY KEY,
+                label TEXT NOT NULL,
+                currency TEXT NOT NULL DEFAULT '₽'
+            );
+        `);
+        dbInitPromise.execSync(`
+            CREATE TABLE IF NOT EXISTS ${HISTORY_TABLE} (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                subtitle TEXT,
+                category TEXT NOT NULL,
+                type TEXT NOT NULL,
+                sum INTEGER NOT NULL,
+                card_masked_number TEXT NOT NULL,
+                FOREIGN KEY (card_masked_number) REFERENCES ${CARDS_TABLE}(masked_number) ON DELETE CASCADE
+            );
+        `);
+
+        seedHistoryMock();
+    }
+    return dbInitPromise;
 };
 
-export const initDatabase = () => {
-    const db = createDatabase();
-    db.execSync(`DROP TABLE IF EXISTS ${CARDS_TABLE}`);
-    db.execSync(`DROP TABLE IF EXISTS ${HISTORY_TABLE}`);
-
-    addCard({
-        label: "МИР",
-        balance: 10000,
-        masked_number: "4281"
-    })
-    addCard({
-        label: "MC",
-        balance: 150000,
-        masked_number: "5193"
-    })
-
-    seedHistoryMock();
-}
+export const initDatabase = () => getDatabase();
 
 export type CardRow = {
-    id: number;
     label: string;
     masked_number: string;
-    balance: number;
     currency?: string;
 };
 
-export const fetchCards = (): CardRow[] => {
-    const db = createDatabase();
-    return db.getAllSync<CardRow>(
-        `SELECT id, label, masked_number, balance, currency FROM ${CARDS_TABLE} ORDER BY id`
+export type HistoryRow = IHistoryMock & { subtitle?: string; card_masked_number: string };
+
+export const insertCard = (card: CardRow) => {
+    const db = getDatabase();
+    db.runSync(
+        `INSERT INTO ${CARDS_TABLE} (masked_number, label, currency) VALUES (?, ?, ?)
+     ON CONFLICT(masked_number) DO UPDATE SET label = excluded.label, currency = excluded.currency;`,
+        [card.masked_number, card.label, card.currency]
     );
 };
 
-export const addCard = (card: Omit<CardRow, "id">) => {
-    const db = createDatabase();
-    db.runSync(
-        `INSERT INTO ${CARDS_TABLE} (label, masked_number, balance) VALUES (?, ?, ?);`,
-        [card.label, card.masked_number, card.balance]
-    );
+export type CardRowWithSum = CardRow & {
+    income_sum: number;
+    expense_sum: number;
+    net_sum: number;
+}
+
+export const fetchCards = (): CardRowWithSum[] => {
+    const db = getDatabase();
+    // const cards = db.getAllSync<CardRow>(`SELECT * FROM ${CARDS_TABLE} ORDER BY label;`);
+    // const history = fetchHistory();
+
+    const cards = db.getAllSync<CardRowWithSum>(`
+        SELECT
+            c.masked_number,
+            c.label,
+            c.currency,
+            COALESCE(SUM(CASE WHEN h.type = 'income' THEN h.sum END), 0) AS income_sum,
+            COALESCE(SUM(CASE WHEN h.type = 'expense' THEN h.sum END), 0) AS expense_sum,
+            COALESCE(SUM(CASE WHEN h.type = 'income' THEN h.sum END), 0)
+                - COALESCE(SUM(CASE WHEN h.type = 'expense' THEN h.sum END), 0) AS net_sum
+        FROM ${CARDS_TABLE} c
+        LEFT JOIN ${HISTORY_TABLE} h ON h.card_masked_number = c.masked_number
+        GROUP BY c.masked_number, c.label, c.currency;
+    `)
+
+    return cards;
 };
 
 export const seedHistoryMock = () => {
-    const db = createDatabase();
-    const count = db.getFirstSync<{ count: number }>(
-        `SELECT COUNT(*) as count FROM ${HISTORY_TABLE};`
-    );
-    if (count?.count) return; // already seeded
+    const db = getDatabase();
+    insertCard({masked_number: "4821", label: "МИР", currency: "₽"});
+    insertCard({masked_number: "5181", label: "MC", currency: "₽"});
+    const existing = db.getFirstSync<{ count: number }>(`SELECT COUNT(*) AS count FROM ${HISTORY_TABLE};`);
+    if (existing?.count) return;
     db.withTransactionSync(() => {
-        for (const entry of historyMock) {
+        for (const item of historyMock) {
             db.runSync(
-                `INSERT INTO ${HISTORY_TABLE} (title, category, type, sum) VALUES (?, ?, ?, ?);`,
-                [entry.title, entry.category, entry.type, entry.sum]
+                `INSERT INTO ${HISTORY_TABLE} (title, subtitle, category, type, sum, card_masked_number)
+         VALUES (?, ?, ?, ?, ?, ?);`,
+                [item.title, "", item.category, item.type, item.sum, item.card]
             );
         }
     });
 };
 
-export const fetchHistory = (): IHistoryMock[] => {
-    const db = createDatabase();
-    return db.getAllSync<IHistoryMock>(
-        `SELECT title, category, type, sum FROM ${HISTORY_TABLE} ORDER BY id DESC;`
+export const fetchHistory = (): HistoryRow[] => {
+    const db = getDatabase();
+    return db.getAllSync<HistoryRow>(
+        `SELECT title, subtitle, category, type, sum, card_masked_number FROM ${HISTORY_TABLE} ORDER BY id DESC;`
     );
 };
 
-export const createTransaction = (pan, sum) => {
-    const db = createDatabase();
+export const createTransaction = (pan: string, sum: number) => {
+    const db = getDatabase();
     db.runSync(
-        `INSERT INTO ${HISTORY_TABLE} (title, category, type, sum) VALUES (?, ?, ?, ?);`,
-                [`Перевод на карту *${pan}`, Category.transfer, HistoryItemType.EXPENSE, sum]
+        `INSERT INTO ${HISTORY_TABLE} (title, category, type, sum, card_masked_number) VALUES (?, ?, ?, ?, ?);`,
+                [`Перевод на карту *${pan.slice(-4)}`, Category.transfer, HistoryItemType.EXPENSE, sum, "4821"]
     )
 }
